@@ -8,6 +8,11 @@ It uses Ditto.
     cd cms3looper
     git clone git@github.com:sgnoohc/mybaby.git
     git clone git@github.com:sgnoohc/Ditto.git ditto
+    # The master veresion of Ditto should work.
+    # But if for some reason it is broken, there is a tagged version of Ditto.
+    # cd ditto
+    # git checkout tags/v1.0
+    # cd ../
     source ditto/bin/setup_ditto.sh mybaby
     ditto_clean
     ditto_make
