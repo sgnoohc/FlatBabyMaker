@@ -27,6 +27,8 @@ using namespace Ditto;
 //extern CMS3 mytree;
 extern Analyses::AnalysisData ana_data;
 extern TString output_name;
+extern TFile* baby_output_file;
+extern TTree* baby_output_tree;
 
 int CMS3Looper(TChain* chain, TString output_name, int nEvents);
 void loop();
@@ -36,6 +38,8 @@ void initCMS3();
 void loadCMS3Event();
 void processCMS3Event();
 void getObjects();
+
+bool isdata();
 
 #endif
 //eof

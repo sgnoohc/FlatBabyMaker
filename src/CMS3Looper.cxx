@@ -8,6 +8,8 @@
 //CMS3 mytree;
 Analyses::AnalysisData ana_data;
 TString output_name;
+TFile* baby_output_file;
+TTree* baby_output_tree;
 
 //______________________________________________________________________________________
 int CMS3Looper(TChain* chain, TString output_name, int nevents)
@@ -37,6 +39,11 @@ void beforeLoop(TChain* chain, TString output_name_, int nevents)
 
   output_name = output_name_;
 
+  baby_output_file = new TFile(output_name+"_tree.root", "recreate");
+  baby_output_tree = new TTree("MyBaby", "MyBaby");
+
+  TreeUtil::createTruthBranch(baby_output_tree, "truth");
+
 }
 
 
@@ -59,11 +66,14 @@ void loop()
 
       loadCMS3Event();
 
+      TreeUtil::initTreeData();
+
       //=================================================================
       // <3 of the code
       // Do whatever you want to in the following function for each event
       //=================================================================
       processCMS3Event();
+
 
     } // End TTree loop
 
@@ -87,11 +97,16 @@ void loadCMS3Event()
 //______________________________________________________________________________________
 void processCMS3Event()
 {
+
   /// Set objects
   getObjects();
 
   /// Fill histograms
   // HistUtil::fillStdHistograms("", ana_data);
+
+  TreeUtil::setTruths(ana_data, "truth");
+
+  baby_output_tree->Fill();
 }
 
 //______________________________________________________________________________________
@@ -102,16 +117,26 @@ void getObjects()
   //ana_data.jets    = getJets(mytree);
   //ana_data.met     = getMET(mytree);
   //ana_data.wgt     = mytree.evt_scale1fb;
+  ana_data.truths    = getTruths(cms3);
 }
 
 //______________________________________________________________________________________
 void afterLoop()
 {
+
+  baby_output_file->cd();
+  baby_output_tree->Write();
+
   // Save histograms
-  PlotUtil::savePlots(ana_data.hist_db, output_name.Data());
+  PlotUtil::savePlots(ana_data.hist_db, (output_name+"_hist.root").Data());
 
   // Fun exit
   PrintUtil::exit();
 }
 
+//______________________________________________________________________________________
+bool isdata()
+{
+  return cms3.evt_isRealData();
+}
 //eof
