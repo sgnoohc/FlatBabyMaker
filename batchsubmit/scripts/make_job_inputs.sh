@@ -18,3 +18,11 @@ cp $DIR/../scripts/sweeproot.sh $DIR/../scripts/sweeproot_macro.C $DIR/../script
 
 echo "Creatied $DIR/../__package"
 ls -l $DIR/../__package
+
+echo ""
+echo ""
+echo "================================================================"
+echo "Done creating __package for condor submission."
+echo "Now copy the runtemplate to another directory and submit in there."
+echo "================================================================"
+echo ""
