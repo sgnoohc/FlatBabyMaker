@@ -43,6 +43,7 @@ void beforeLoop(TChain* chain, TString output_name_, int nevents)
   baby_output_tree = new TTree("MyBaby", "MyBaby");
 
   TreeUtil::createTruthBranch(baby_output_tree, "truth");
+  TreeUtil::createLeptonBranch(baby_output_tree, "lep");
 
 }
 
@@ -105,6 +106,7 @@ void processCMS3Event()
   // HistUtil::fillStdHistograms("", ana_data);
 
   TreeUtil::setTruths(ana_data, "truth");
+  TreeUtil::setLeptons(ana_data, "lep");
 
   baby_output_tree->Fill();
 }
@@ -113,11 +115,11 @@ void processCMS3Event()
 void getObjects()
 {
   /// Get objects
-  //ana_data.leptons = getLeptons(mytree);
-  //ana_data.jets    = getJets(mytree);
-  //ana_data.met     = getMET(mytree);
-  //ana_data.wgt     = mytree.evt_scale1fb;
-  ana_data.truths    = getTruths(cms3);
+  ana_data.leptons = getLeptons();
+  //ana_data.jets    = getJets();
+  //ana_data.met     = getMET();
+  //ana_data.wgt     = cms3.evt_scale1fb();
+  ana_data.truths    = getTruths();
 }
 
 //______________________________________________________________________________________

@@ -13,13 +13,18 @@
 
 using namespace Ditto;
 
-ObjUtil::Leptons getLeptons(CMS3& mytree);
-ObjUtil::Leptons getElectrons(CMS3& mytree);
-ObjUtil::Jets getJets(CMS3& mytree);
-ObjUtil::Jets getBJets(CMS3& mytree);
-ObjUtil::METs getMETs(CMS3& mytree);
-ObjUtil::MET getMET(CMS3& mytree);
-ObjUtil::Truths getTruths(CMS3& mytree);
+// CMS3 to Ditto
+ObjUtil::Lepton getElectron(int idx);
+ObjUtil::Leptons getElectrons();
+//ObjUtil::Lepton getMuon(int idx);
+//ObjUtil::Jet getJet(int idx);
+
+ObjUtil::Leptons getLeptons();
+ObjUtil::Jets getJets();
+ObjUtil::Jets getBJets();
+ObjUtil::METs getMETs();
+ObjUtil::MET getMET();
+ObjUtil::Truths getTruths();
 
 #endif
 //eof
