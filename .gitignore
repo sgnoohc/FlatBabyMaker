@@ -8,3 +8,5 @@ package.tar.gz
 run_baby_run.sh
 sweeproot.sh
 sweeproot_macro.C
+batchsubmit/__package/
+batchsubmit/camp*
