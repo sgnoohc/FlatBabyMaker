@@ -1,9 +1,6 @@
 import os
 import sys
 
-tag = "testrun11"
-analysis = "test"
-
 d_ds2name = {
     "backgrounds": {
 #### Wjets
@@ -181,6 +178,9 @@ def dataset_to_shortname(ds):
                 return typ_values[dname]
     return "unknown"
 
+tag = "test"
+analysis = "test"
+
 inputs_path = os.path.abspath(__file__).rsplit("/",1)[0]+"/../__package/"
 sweepRoot_scripts = [inputs_path+"sweeproot.sh", inputs_path+"sweeproot_macro.C"]
 merging_scripts = [inputs_path+"merge_script.sh", inputs_path+"merge_macro.C"]
@@ -188,7 +188,7 @@ merging_scripts = [inputs_path+"merge_script.sh", inputs_path+"merge_macro.C"]
 package = inputs_path+"package.tar.gz"
 executable = inputs_path+"run_baby_run.sh"
 dashboard_name = "AutoTwopler_MyBabies_%s"%tag
-baby_merged_dir = "/nfs-7/userdata/%s/AutoTwopler_babies/merged/"%(os.getenv("USER"))
+baby_merged_dir = "/hadoop/cms/store/user/%s/AutoTwopler_babies/merged"%(os.getenv("USER"))
 merge_babies_on_condor = True
 
 if not os.path.isfile(package):
