@@ -1,3 +1,0 @@
-First copy the runtemplate
-cp -r runtemplate campaign_test1
-Then cd into campaign_test1 and python ducks.py
