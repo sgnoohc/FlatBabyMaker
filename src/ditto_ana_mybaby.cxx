@@ -19,6 +19,14 @@ int main(int argc, char* argv[])
   if (argc == 4)
     max_nevents = atoi(argv[3]);
 
+  // Determine whether this is a fastsim or not
+  TString infile = input_file_path;
+  LoopUtil::isfastsim = bool(infile.Contains("FSPremix") || infile.Contains("FastAsympt25ns") || infile.Contains("TChi") || infile.Contains("condor") || infile.Contains("VBF-C1N2"));
+
+  // Determine whether this is a data run
+  TString outfile = output_file_path;
+  LoopUtil::isdata = bool(outfile.Contains("data_"));
+
   TChain *chsig = new TChain("Events");
   chsig->Add(input_file_path);
   CMS3Looper(chsig, output_file_path, max_nevents);

@@ -42,8 +42,10 @@ void beforeLoop(TChain* chain, TString output_name_, int nevents)
   baby_output_file = new TFile(output_name+"_tree.root", "recreate");
   baby_output_tree = new TTree("MyBaby", "MyBaby");
 
-  TreeUtil::createTruthBranch(baby_output_tree, "truth");
+  //TreeUtil::createTruthBranch(baby_output_tree, "truth");
   TreeUtil::createLeptonBranch(baby_output_tree, "lep");
+  TreeUtil::createJetBranch(baby_output_tree, "jet");
+  TreeUtil::createMETBranch(baby_output_tree, "met");
 
 }
 
@@ -58,6 +60,7 @@ void loop()
   {
 
     initCMS3();
+    initJetCorrection();
 
     // Loop over the TTree
     while (LoopUtil::nextEvent())
@@ -105,8 +108,10 @@ void processCMS3Event()
   /// Fill histograms
   // HistUtil::fillStdHistograms("", ana_data);
 
-  TreeUtil::setTruths(ana_data, "truth");
+  //TreeUtil::setTruths(ana_data, "truth");
   TreeUtil::setLeptons(ana_data, "lep");
+  TreeUtil::setJets(ana_data, "jet");
+  TreeUtil::setMET(ana_data, "met");
 
   baby_output_tree->Fill();
 }
@@ -116,8 +121,8 @@ void getObjects()
 {
   /// Get objects
   ana_data.leptons = getLeptons();
-  //ana_data.jets    = getJets();
-  //ana_data.met     = getMET();
+  ana_data.jets    = getJets();
+  ana_data.met     = getMETs().at(0);
   //ana_data.wgt     = cms3.evt_scale1fb();
   ana_data.truths    = getTruths();
 }

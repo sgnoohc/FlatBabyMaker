@@ -29,4 +29,4 @@ echo "Before running ditto_ana_mybaby"
 # Now run the baby maker!
 export LD_LIBRARY_PATH=./:$LD_LIBRARY_PATH
 ldd ditto_ana_mybaby
-./ditto_ana_mybaby $FILE output 100
+./ditto_ana_mybaby $FILE output

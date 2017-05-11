@@ -5,6 +5,10 @@
 
 #include "CMS3Connector.h"
 
+// global variables
+FactorizedJetCorrector* jet_corrector = 0;
+JetCorrectionUncertainty* jetcorr_uncertainty = 0;
+
 ObjUtil::Lepton getElectron(int idx)
 {
   ObjUtil::Lepton lepton;
@@ -13,20 +17,20 @@ ObjUtil::Lepton getElectron(int idx)
   float phi = cms3.els_p4().at(idx).phi();
   float mass = cms3.els_mass().at(idx);
   lepton.p4.SetPtEtaPhiM(pt, eta, phi, mass);
-  lepton.etaSC = cms3.els_etaSC().at(idx);
-  lepton.sigmaIEtaIEta_full5x5 = cms3.els_sigmaIEtaIEta_full5x5().at(idx);
-  lepton.hOverE = cms3.els_hOverE().at(idx);
-  lepton.dEtaIn = cms3.els_dEtaIn().at(idx);
-  lepton.dPhiIn = cms3.els_dPhiIn().at(idx);
-  lepton.epRatio = fabs( (1.0/cms3.els_ecalEnergy().at(idx)) - (cms3.els_eOverPIn().at(idx)/cms3.els_ecalEnergy().at(idx)) );
-  lepton.nmiss = cms3.els_exp_innerlayers().at(idx);
+  lepton.elEtaSC = cms3.els_etaSC().at(idx);
+  lepton.elSigmaIEtaIEta_full5x5 = cms3.els_sigmaIEtaIEta_full5x5().at(idx);
+  lepton.elHOverE = cms3.els_hOverE().at(idx);
+  lepton.elDEtaIn = cms3.els_dEtaIn().at(idx);
+  lepton.elDPhiIn = cms3.els_dPhiIn().at(idx);
+  lepton.elEpRatio = fabs( (1.0/cms3.els_ecalEnergy().at(idx)) - (cms3.els_eOverPIn().at(idx)/cms3.els_ecalEnergy().at(idx)) );
+  lepton.elNmiss = cms3.els_exp_innerlayers().at(idx);
   lepton.dxy = cms3.els_dxyPV().at(idx);
   lepton.dz = cms3.els_dzPV().at(idx);
   lepton.tightcharge = tightChargeEle(idx);
-  lepton.convVeto = cms3.els_conv_vtx_flag().at(idx);
+  lepton.elConvVeto = cms3.els_conv_vtx_flag().at(idx);
   lepton.ip3d = cms3.els_ip3d().at(idx);
   lepton.sip3d = fabs(cms3.els_ip3d().at(idx))/cms3.els_ip3derr().at(idx);
-  lepton.mva = cms3.els_VIDNonTrigMvaValue().at(idx) ;
+  lepton.elMva = cms3.els_VIDNonTrigMvaValue().at(idx) ;
   // needed for isolation calculation
   const LorentzVector& lep_p4 = cms3.els_p4().at(idx);
   const LorentzVector& jet_p4 = closestJet(lep_p4, 0.4, 3.0, /*whichCorr=*/2);
@@ -55,11 +59,61 @@ ObjUtil::Leptons getElectrons()
   return leptons;
 }
 
+ObjUtil::Lepton getMuon(int idx)
+{
+  ObjUtil::Lepton lepton;
+  float pt = cms3.mus_p4().at(idx).pt();
+  float eta = cms3.mus_p4().at(idx).eta();
+  float phi = cms3.mus_p4().at(idx).phi();
+  float mass = cms3.mus_mass().at(idx);
+  lepton.p4.SetPtEtaPhiM(pt, eta, phi, mass);
+  lepton.dxy = cms3.mus_dxyPV().at(idx);
+  lepton.dz = cms3.mus_dzPV().at(idx);
+  lepton.tightcharge = tightChargeMuon(idx);
+  lepton.ip3d = cms3.mus_ip3d().at(idx);
+  lepton.sip3d = fabs(cms3.mus_ip3d().at(idx))/cms3.mus_ip3derr().at(idx);
+  // needed for isolation calculation
+  const LorentzVector& lep_p4 = cms3.mus_p4().at(idx);
+  const LorentzVector& jet_p4 = closestJet(lep_p4, 0.4, 3.0, /*whichCorr=*/2);
+  float closeJetPt = jet_p4.pt();
+  lepton.ptRatio = ( closeJetPt>0. ? lep_p4.pt()/closeJetPt : 1.);
+  lepton.ptRel = ptRel(lep_p4, jet_p4, true);
+  lepton.relIso03 = muRelIso03_noCorr(idx);
+  lepton.relIso03DB = muRelIso03DB(idx);
+  lepton.relIso03EA = muRelIso03EA(idx);
+  lepton.miniRelIsoCMS3_EA = muMiniRelIsoCMS3_EA(idx, /*eaversion=*/1);
+  lepton.miniRelIsoCMS3_DB = muMiniRelIsoCMS3_DB(idx);
+  lepton.charge = cms3.mus_charge().at(idx); lepton.pdgId = (-13)*lepton.charge;
+  lepton.id = 0;
+  lepton.muPOverP = cms3.mus_ptErr().at(idx) / cms3.mus_trk_p4().at(idx).pt();
+  lepton.muPidPFMuon = cms3.mus_pid_PFMuon().at(idx);
+  lepton.muType = cms3.mus_type().at(idx);
+  lepton.muChi2OverNDof = cms3.mus_gfit_chi2().at(idx) / cms3.mus_gfit_ndof().at(idx);
+  lepton.muChi2LocalPosition = cms3.mus_chi2LocalPosition().at(idx);
+  lepton.muTrkKink = cms3.mus_trkKink().at(idx);
+  lepton.muValidHitFraction = cms3.mus_validHits().at(idx)/(double)(cms3.mus_validHits().at(idx)+cms3.mus_lostHits().at(idx)+cms3.mus_exp_innerlayers().at(idx)+cms3.mus_exp_outerlayers().at(idx));
+  lepton.muSegmCompatibility = cms3.mus_segmCompatibility().at(idx);
+  return lepton;
+}
+
+ObjUtil::Leptons getMuons()
+{
+  ObjUtil::Leptons leptons;
+  for(unsigned int iMu = 0; iMu < cms3.mus_p4().size(); iMu++)
+  {
+    ObjUtil::Lepton lepton = getMuon(iMu);
+    leptons.push_back(lepton);
+  }
+  return leptons;
+}
+
 ObjUtil::Leptons getLeptons()
 {
   ObjUtil::Leptons leptons;
   ObjUtil::Leptons electrons = getElectrons();
+  ObjUtil::Leptons muons = getMuons();
   leptons.insert(leptons.end(), electrons.begin(), electrons.end());
+  leptons.insert(leptons.end(), muons.begin(), muons.end());
   std::sort(leptons.begin(), leptons.end(), comparator_pt<ObjUtil::Lepton>);
   return leptons;
 }
@@ -67,6 +121,86 @@ ObjUtil::Leptons getLeptons()
 ObjUtil::Jets getJets()
 {
   ObjUtil::Jets jets;
+  for (unsigned int iJet = 0; iJet < cms3.pfjets_p4().size(); iJet++)
+  {
+
+    ObjUtil::Jet jet;
+    jet.p4.SetPxPyPzE(cms3.pfjets_p4().at(iJet).px(),cms3.pfjets_p4().at(iJet).py(),cms3.pfjets_p4().at(iJet).pz(),cms3.pfjets_p4().at(iJet).energy());
+
+    // get L1FastL2L3Residual total correction
+    jet_corrector->setRho   ( cms3.evt_fixgridfastjet_all_rho() );
+    jet_corrector->setJetA  ( cms3.pfjets_area().at(iJet)       );
+    jet_corrector->setJetPt ( jet.p4.Pt()               );
+    jet_corrector->setJetEta( jet.p4.Eta()              );
+    double corr = jet_corrector->getCorrection();
+
+    // check for negative correction
+    if (corr < 0. && fabs(jet.p4.Eta()) < 4.7) {
+      std::cout << "ScanChain::Looper: WARNING: negative jet correction: " << corr
+        << ", raw jet pt: " << jet.p4.Pt() << ", eta: " << jet.p4.Eta() << std::endl;
+    }
+
+    // include protections here on jet kinematics to prevent rare warnings/crashes
+    double varUP = 1.;
+    double varDN = 1.;
+    if (!LoopUtil::isdata && jet.p4.Pt()*corr > 0. && fabs(jet.p4.Eta()) < 5.4) {
+      jetcorr_uncertainty->setJetEta(jet.p4.Eta());
+      jetcorr_uncertainty->setJetPt(jet.p4.Pt() * corr); // must use CORRECTED pt
+      double unc = jetcorr_uncertainty->getUncertainty(true);
+      varUP = (1. + unc);
+      varDN = (1. - unc);
+    }
+
+    // apply new JEC to p4
+    jet.jecCorr   = corr;
+    jet.jecCorrUp = corr * varUP;
+    jet.jecCorrDn = corr * varDN;
+    jet.undoJEC = cms3.pfjets_undoJEC().at(iJet);
+
+    // Charge hadron fraction
+    jet.chf = cms3.pfjets_chargedHadronE().at(iJet) / (cms3.pfjets_undoJEC().at(iJet)*cms3.pfjets_p4().at(iJet).energy());
+
+    // btag CSV
+    jet.btagCSV = cms3.pfjets_pfCombinedInclusiveSecondaryVertexV2BJetTag().at(iJet);
+
+    if (!LoopUtil::isdata) {
+      jet.mcPt          = -1;
+      jet.mcFlavour     =  0;
+      jet.hadronFlavour =  0;
+      if (cms3.pfjets_mc_p4()        .size() > 0) jet.mcPt          = cms3.pfjets_mc_p4().at(iJet).pt();
+      if (cms3.pfjets_partonFlavour().size() > 0) jet.mcFlavour     = cms3.pfjets_partonFlavour().at(iJet);
+      if (cms3.pfjets_hadronFlavour().size() > 0) jet.hadronFlavour = cms3.pfjets_hadronFlavour().at(iJet);
+    } else {
+      jet.mcPt = -999.;
+      jet.mcFlavour = -999;
+      jet.hadronFlavour = -999;
+    }
+
+    //jet_qgl
+    jet.area = cms3.pfjets_area().at(iJet);
+
+    jet.puId      = loosePileupJetId(iJet) ? 1 : 0;
+    //jet.puIdpuppi = loosePileupJetId_v2(iJet) ? 1 : 0;
+    jet.puIdpuppi = -999;
+
+    jet.id = 0;
+    if (isLoosePFJet(iJet))              jet.id = jet.id | (1<<0);
+    if (isMediumPFJet(iJet))             jet.id = jet.id | (1<<1);
+    if (isTightPFJet(iJet))              jet.id = jet.id | (1<<2);
+    if (isLoosePFJetV2(iJet))            jet.id = jet.id | (1<<3);
+    if (isTightPFJetV2(iJet))            jet.id = jet.id | (1<<4);
+    if (loosePileupJetId(iJet))          jet.id = jet.id | (1<<5);
+    //if (loosePileupJetId_v2(iJet, true)) jet.id = jet.id | (1<<6);
+
+    //veto for Fastsim events with crazy unmatched jets
+    if (LoopUtil::isfastsim && jet.p4.Pt() > 20 && fabs(jet.p4.Eta()) < 2.5 && jet.chf < 0.1 && jet.mcPt == 0)
+      jet.FSveto = 1;
+    else
+      jet.FSveto = 0;
+
+    jets.push_back(jet);
+  }
+
   return jets;
 }
 
@@ -79,6 +213,55 @@ ObjUtil::Jets getBJets()
 ObjUtil::METs getMETs()
 {
   ObjUtil::METs mets;
+
+  // Compute PF MET and the two up/down variations
+  std::pair <float, float> t1metUP;
+  std::pair <float, float> t1metDN;
+  std::pair <float, float> t1met;
+  if (!LoopUtil::isdata) {
+    t1met = getT1CHSMET_fromMINIAOD(jet_corrector, 0, 0);
+    t1metUP = getT1CHSMET_fromMINIAOD(jet_corrector, jetcorr_uncertainty, 1);
+    t1metDN = getT1CHSMET_fromMINIAOD(jet_corrector, jetcorr_uncertainty, 0);
+  }
+  else {
+    t1met = getT1CHSMET_fromMINIAOD(jet_corrector); // never apply variations to data
+    t1metUP = t1met;
+    t1metDN = t1met;
+  }
+
+  // Set the PF MET
+  ObjUtil::MET pfmet;
+  pfmet.p4.      SetPtEtaPhiE(t1met.first, 0, t1met.second, t1met.first);
+  pfmet.p4CorrUp.SetPtEtaPhiE(t1metUP.first, 0, t1metUP.second, t1metUP.first);
+  pfmet.p4CorrDn.SetPtEtaPhiE(t1metDN.first, 0, t1metDN.second, t1metDN.first);
+
+  //// hack for fastsim v1
+  //ObjUtil::MET rawmet;
+  //if (LoopUtil::isfastsim)
+  //  rawmet.p4.SetPtEtaPhiM(cms3.evt_pfmet_raw(), 0, cms3.evt_pfmetPhi_raw(), 0);
+  //else
+  //  rawmet.p4.SetPtEtaPhiM(cms3.evt_METToolbox_pfmet_raw(), 0, cms3.evt_METToolbox_pfmetPhi_raw(), 0);
+
+  //// Set true MET
+  //ObjUtil::MET genmet;
+  //if (!LoopUtil::isdata)
+  //  genmet.p4.SetPtEtaPhiM(cms3.gen_met(), 0, cms3.gen_metPhi(), 0);
+
+  //// Set calo MET
+  //ObjUtil::MET calomet;
+  //calomet.p4.SetPtEtaPhiM(cms3.evt_calomet(), 0, cms3.evt_calometPhi(), 0);
+
+  //// Set trk MET
+  //ObjUtil::MET trackmet;
+  //metStruct trkmet = trackerMET(0.1);
+  //trackmet.p4.SetPtEtaPhiM(trkmet.met, 0, trkmet.metphi, 0);
+
+  mets.push_back(pfmet);
+  //mets.push_back(rawmet);
+  //mets.push_back(genmet);
+  //mets.push_back(calomet);
+  //mets.push_back(trackmet);
+
   return mets;
 }
 
@@ -134,6 +317,134 @@ ObjUtil::Truths getTruths()
   }
 
   return truths;
+
+}
+
+void initJetCorrection()
+{
+
+  // The following code was taken from MT2 baby maker
+
+  TString currentFileName = LoopUtil::getCurrentTFile()->GetName();
+
+  std::vector<std::string> jetcorr_config_filenames;
+  std::string jetcorr_uncertainty_filename;
+
+  //// files for RunIISpring15 MC
+  //int bx = 25;
+  //if (bx == 50) {
+  //  if (LoopUtil::isdata) {
+  //    jetcorr_config_filenames.push_back  ("CORE/Tools/jetcorr/data/run2_50ns/Summer15_50nsV4_DATA_L1FastJet_AK4PFchs.txt");
+  //    jetcorr_config_filenames.push_back  ("CORE/Tools/jetcorr/data/run2_50ns/Summer15_50nsV4_DATA_L2Relative_AK4PFchs.txt");
+  //    jetcorr_config_filenames.push_back  ("CORE/Tools/jetcorr/data/run2_50ns/Summer15_50nsV4_DATA_L3Absolute_AK4PFchs.txt");
+  //    jetcorr_config_filenames.push_back  ("CORE/Tools/jetcorr/data/run2_50ns/Summer15_50nsV4_DATA_L2L3Residual_AK4PFchs.txt");
+  //  } else {
+  //    jetcorr_config_filenames.push_back  ("CORE/Tools/jetcorr/data/run2_50ns/Summer15_50nsV4_MC_L1FastJet_AK4PFchs.txt");
+  //    jetcorr_config_filenames.push_back  ("CORE/Tools/jetcorr/data/run2_50ns/Summer15_50nsV4_MC_L2Relative_AK4PFchs.txt");
+  //    jetcorr_config_filenames.push_back  ("CORE/Tools/jetcorr/data/run2_50ns/Summer15_50nsV4_MC_L3Absolute_AK4PFchs.txt");
+  //    jetcorr_uncertainty_filename       = "CORE/Tools/jetcorr/data/run2_50ns/Summer15_50nsV4_DATA_Uncertainty_AK4PFchs.txt";
+  //  }
+  //}
+  //else if (bx == 25) {
+  //  if (LoopUtil::isdata) {
+  //    jetcorr_config_filenames.push_back  ("CORE/Tools/jetcorr/data/run2_25ns/Summer15_25nsV7_DATA_L1FastJet_AK4PFchs.txt");
+  //    jetcorr_config_filenames.push_back  ("CORE/Tools/jetcorr/data/run2_25ns/Summer15_25nsV7_DATA_L2Relative_AK4PFchs.txt");
+  //    jetcorr_config_filenames.push_back  ("CORE/Tools/jetcorr/data/run2_25ns/Summer15_25nsV7_DATA_L3Absolute_AK4PFchs.txt");
+  //    jetcorr_config_filenames.push_back  ("CORE/Tools/jetcorr/data/run2_25ns/Summer15_25nsV7_DATA_L2L3Residual_AK4PFchs.txt");
+  //  } else if (LoopUtil::isfastsim) {
+  //    jetcorr_config_filenames.push_back  ("CORE/Tools/jetcorr/data/run2_25ns/MCRUN2_74_V9_L1FastJet_AK4PFchs.txt");
+  //    jetcorr_config_filenames.push_back  ("CORE/Tools/jetcorr/data/run2_25ns/MCRUN2_74_V9_L2Relative_AK4PFchs.txt");
+  //    jetcorr_config_filenames.push_back  ("CORE/Tools/jetcorr/data/run2_25ns/MCRUN2_74_V9_L3Absolute_AK4PFchs.txt");
+  //    jetcorr_uncertainty_filename =       "CORE/Tools/jetcorr/data/run2_25ns/MCRUN2_74_V9_Uncertainty_AK4PFchs.txt"; // not sure if these are correct..
+  //  } else {
+  //    jetcorr_config_filenames.push_back  ("CORE/Tools/jetcorr/data/run2_25ns/Summer15_25nsV2_MC_L1FastJet_AK4PFchs.txt");
+  //    jetcorr_config_filenames.push_back  ("CORE/Tools/jetcorr/data/run2_25ns/Summer15_25nsV2_MC_L2Relative_AK4PFchs.txt");
+  //    jetcorr_config_filenames.push_back  ("CORE/Tools/jetcorr/data/run2_25ns/Summer15_25nsV2_MC_L3Absolute_AK4PFchs.txt");
+  //    jetcorr_uncertainty_filename =       "CORE/Tools/jetcorr/data/run2_25ns/Summer15_25nsV7_DATA_Uncertainty_AK4PFchs.txt";
+  //  }
+  //}
+
+
+  //if (LoopUtil::isdata)
+  //{
+  //  // run dependent corrections for 80X data
+  //  if (currentFileName.Contains("2016B") || currentFileName.Contains("2016C") || currentFileName.Contains("2016D"))
+  //  {
+  //    jetcorr_config_filenames.clear();
+  //    jetcorr_config_filenames.push_back  ("jetCorrections/Summer16_23Sep2016BCDV4_DATA_L1FastJet_AK4PFchs.txt"   );
+  //    jetcorr_config_filenames.push_back  ("jetCorrections/Summer16_23Sep2016BCDV4_DATA_L2Relative_AK4PFchs.txt"  );
+  //    jetcorr_config_filenames.push_back  ("jetCorrections/Summer16_23Sep2016BCDV4_DATA_L3Absolute_AK4PFchs.txt"  );
+  //    jetcorr_config_filenames.push_back  ("jetCorrections/Summer16_23Sep2016BCDV4_DATA_L2L3Residual_AK4PFchs.txt");
+  //  }
+  //  else if (currentFileName.Contains("2016E") || currentFileName.Contains("2016F"))
+  //  {
+  //    jetcorr_config_filenames.clear();
+  //    jetcorr_config_filenames.push_back  ("jetCorrections/Summer16_23Sep2016EFV4_DATA_L1FastJet_AK4PFchs.txt"   );
+  //    jetcorr_config_filenames.push_back  ("jetCorrections/Summer16_23Sep2016EFV4_DATA_L2Relative_AK4PFchs.txt"  );
+  //    jetcorr_config_filenames.push_back  ("jetCorrections/Summer16_23Sep2016EFV4_DATA_L3Absolute_AK4PFchs.txt"  );
+  //    jetcorr_config_filenames.push_back  ("jetCorrections/Summer16_23Sep2016EFV4_DATA_L2L3Residual_AK4PFchs.txt");
+
+  //    jetcorr_config_filenames_postrun278802.clear();
+  //    jetcorr_config_filenames_postrun278802.push_back  ("jetCorrections/Summer16_23Sep2016GV4_DATA_L1FastJet_AK4PFchs.txt"   );
+  //    jetcorr_config_filenames_postrun278802.push_back  ("jetCorrections/Summer16_23Sep2016GV4_DATA_L2Relative_AK4PFchs.txt"  );
+  //    jetcorr_config_filenames_postrun278802.push_back  ("jetCorrections/Summer16_23Sep2016GV4_DATA_L3Absolute_AK4PFchs.txt"  );
+  //    jetcorr_config_filenames_postrun278802.push_back  ("jetCorrections/Summer16_23Sep2016GV4_DATA_L2L3Residual_AK4PFchs.txt");
+  //  }
+  //  else if (currentFileName.Contains("2016G"))
+  //  {
+  //    jetcorr_config_filenames.clear();
+  //    jetcorr_config_filenames.push_back  ("jetCorrections/Summer16_23Sep2016GV4_DATA_L1FastJet_AK4PFchs.txt"   );
+  //    jetcorr_config_filenames.push_back  ("jetCorrections/Summer16_23Sep2016GV4_DATA_L2Relative_AK4PFchs.txt"  );
+  //    jetcorr_config_filenames.push_back  ("jetCorrections/Summer16_23Sep2016GV4_DATA_L3Absolute_AK4PFchs.txt"  );
+  //    jetcorr_config_filenames.push_back  ("jetCorrections/Summer16_23Sep2016GV4_DATA_L2L3Residual_AK4PFchs.txt");
+  //  }
+  //  else if (currentFileName.Contains("2016H"))
+  //  {
+  //    jetcorr_config_filenames.clear();
+  //    jetcorr_config_filenames.push_back  ("jetCorrections/Summer16_23Sep2016HV4_DATA_L1FastJet_AK4PFchs.txt"   );
+  //    jetcorr_config_filenames.push_back  ("jetCorrections/Summer16_23Sep2016HV4_DATA_L2Relative_AK4PFchs.txt"  );
+  //    jetcorr_config_filenames.push_back  ("jetCorrections/Summer16_23Sep2016HV4_DATA_L3Absolute_AK4PFchs.txt"  );
+  //    jetcorr_config_filenames.push_back  ("jetCorrections/Summer16_23Sep2016HV4_DATA_L2L3Residual_AK4PFchs.txt");
+  //  }
+  //}
+  //else if (LoopUtil::isfastsim)
+  if (LoopUtil::isfastsim)
+  {
+    jetcorr_config_filenames.clear();
+    jetcorr_config_filenames.push_back  ("CORE/Tools/jetcorr/data/run2_25ns/Spring16_FastSimV1_L1FastJet_AK4PFchs.txt");
+    jetcorr_config_filenames.push_back  ("CORE/Tools/jetcorr/data/run2_25ns/Spring16_FastSimV1_L2Relative_AK4PFchs.txt");
+    jetcorr_config_filenames.push_back  ("CORE/Tools/jetcorr/data/run2_25ns/Spring16_FastSimV1_L3Absolute_AK4PFchs.txt");
+    jetcorr_uncertainty_filename =       "CORE/Tools/jetcorr/data/run2_25ns/Spring16_FastSimV1_Uncertainty_AK4PFchs.txt";
+  }
+  else if (currentFileName.Contains("Spring16"))
+  { // Spring16 MC (ICHEP)
+    jetcorr_config_filenames.clear();
+    jetcorr_config_filenames.push_back  ("CORE/Tools/jetcorr/data/run2_25ns/Spring16_25nsV6_MC_L1FastJet_AK4PFchs.txt");
+    jetcorr_config_filenames.push_back  ("CORE/Tools/jetcorr/data/run2_25ns/Spring16_25nsV6_MC_L2Relative_AK4PFchs.txt");
+    jetcorr_config_filenames.push_back  ("CORE/Tools/jetcorr/data/run2_25ns/Spring16_25nsV6_MC_L3Absolute_AK4PFchs.txt");
+    jetcorr_uncertainty_filename =       "CORE/Tools/jetcorr/data/run2_25ns/Spring16_25nsV6_MC_Uncertainty_AK4PFchs.txt";
+  }
+  else
+  { // default: Summer16 corrections (Moriond 2017)
+    jetcorr_config_filenames.clear();
+    jetcorr_config_filenames.push_back  ("CORE/Tools/jetcorr/data/run2_25ns/Summer16_23Sep2016V3_MC/Summer16_23Sep2016V3_MC_L1FastJet_AK4PFchs.txt");
+    jetcorr_config_filenames.push_back  ("CORE/Tools/jetcorr/data/run2_25ns/Summer16_23Sep2016V3_MC/Summer16_23Sep2016V3_MC_L2Relative_AK4PFchs.txt");
+    jetcorr_config_filenames.push_back  ("CORE/Tools/jetcorr/data/run2_25ns/Summer16_23Sep2016V3_MC/Summer16_23Sep2016V3_MC_L3Absolute_AK4PFchs.txt");
+    jetcorr_uncertainty_filename =       "CORE/Tools/jetcorr/data/run2_25ns/Summer16_23Sep2016V3_MC/Summer16_23Sep2016V3_MC_Uncertainty_AK4PFchs.txt";
+  }
+
+  cout << "applying JEC from the following files:" << endl;
+  for (unsigned int ifile = 0; ifile < jetcorr_config_filenames.size(); ++ifile) {
+    cout << "   " << jetcorr_config_filenames.at(ifile) << endl;
+  }
+
+  jet_corrector  = makeJetCorrector(jetcorr_config_filenames);
+
+  if (!LoopUtil::isdata) {
+    cout << "applying JEC uncertainties from file: " << endl
+         << "   " << jetcorr_uncertainty_filename << endl;
+    jetcorr_uncertainty = new JetCorrectionUncertainty(jetcorr_uncertainty_filename);
+  }
 
 }
 
