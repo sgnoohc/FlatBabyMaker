@@ -28,5 +28,5 @@ ls -l /hadoop/cms/store/user/phchang
 echo "Before running ditto_ana_mybaby"
 # Now run the baby maker!
 export LD_LIBRARY_PATH=./:$LD_LIBRARY_PATH
-ldd ditto_ana_mybaby
-./ditto_ana_mybaby $FILE output
+ldd ditto_ana_mybabymaker
+./ditto_ana_mybabymaker $FILE output

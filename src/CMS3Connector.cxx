@@ -93,6 +93,10 @@ ObjUtil::Lepton getMuon(int idx)
   lepton.muTrkKink = cms3.mus_trkKink().at(idx);
   lepton.muValidHitFraction = cms3.mus_validHits().at(idx)/(double)(cms3.mus_validHits().at(idx)+cms3.mus_lostHits().at(idx)+cms3.mus_exp_innerlayers().at(idx)+cms3.mus_exp_outerlayers().at(idx));
   lepton.muSegmCompatibility = cms3.mus_segmCompatibility().at(idx);
+  lepton.muGFitValidSTAHits = cms3.mus_gfit_validSTAHits().at(idx);
+  lepton.muNMatchedStations = cms3.mus_numberOfMatchedStations().at(idx);
+  lepton.muValidPixelHits = cms3.mus_validPixelHits().at(idx);
+  lepton.muNLayers = cms3.mus_nlayers().at(idx);
   return lepton;
 }
 
