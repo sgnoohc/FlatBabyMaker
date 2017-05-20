@@ -5,8 +5,8 @@ cd /cvmfs/cms.cern.ch/$SCRAM_ARCH/cms/cmssw/$CMSSW_VERSION/src
 eval `scramv1 runtime -sh`
 cd -
 
-source unset_ditto
 source ~/ditto/bin/thisditto.sh
+source unset_ditto
 source setup_ditto /home/users/phchang/analyses/mybabyframework/mybabymaker/ QUIET
 source ditto_include_core ~/cmstas/core
 
