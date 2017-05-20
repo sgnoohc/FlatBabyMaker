@@ -12,45 +12,36 @@ JetCorrectionUncertainty* jetcorr_uncertainty = 0;
 
 ObjUtil::Lepton getElectron(int idx)
 {
+  // Create new object
   ObjUtil::Lepton lepton;
-  float pt = cms3.els_p4().at(idx).pt();
-  float eta = cms3.els_p4().at(idx).eta();
-  float phi = cms3.els_p4().at(idx).phi();
+
+  // Set basic kinematics
+  float pt   = cms3.els_p4()  .at(idx).pt();
+  float eta  = cms3.els_p4()  .at(idx).eta();
+  float phi  = cms3.els_p4()  .at(idx).phi();
   float mass = cms3.els_mass().at(idx);
   lepton.p4.SetPtEtaPhiM(pt, eta, phi, mass);
-  lepton.elEtaSC = cms3.els_etaSC().at(idx);
-  lepton.elSigmaIEtaIEta_full5x5 = cms3.els_sigmaIEtaIEta_full5x5().at(idx);
-  lepton.elHOverE = cms3.els_hOverE().at(idx);
-  lepton.elDEtaIn = cms3.els_dEtaIn().at(idx);
-  lepton.elDPhiIn = cms3.els_dPhiIn().at(idx);
-  lepton.elEpRatio = fabs( (1.0/cms3.els_ecalEnergy().at(idx)) - (cms3.els_eOverPIn().at(idx)/cms3.els_ecalEnergy().at(idx)) );
-  lepton.elNmiss = cms3.els_exp_innerlayers().at(idx);
-  lepton.dxy = cms3.els_dxyPV().at(idx);
-  lepton.dz = cms3.els_dzPV().at(idx);
-  lepton.tightcharge = tightChargeEle(idx);
-  lepton.elConvVeto = cms3.els_conv_vtx_flag().at(idx);
-  lepton.ip3d = cms3.els_ip3d().at(idx);
-  lepton.sip3d = fabs(cms3.els_ip3d().at(idx))/cms3.els_ip3derr().at(idx);
-  //lepton.elMva = cms3.els_VIDNonTrigMvaValue().at(idx) ;
-  lepton.elMva = globalEleMVAreader->MVA(idx);
-  // needed for isolation calculation
-  const LorentzVector& lep_p4 = cms3.els_p4().at(idx);
-  const LorentzVector& jet_p4 = closestJet(lep_p4, 0.4, 3.0, /*whichCorr=*/2);
-  float closeJetPt = jet_p4.pt();
-  lepton.ptRatio = ( closeJetPt>0. ? lep_p4.pt()/closeJetPt : 1.);
-  lepton.ptRel = ptRel(lep_p4, jet_p4, true);
-  lepton.relIso03 = eleRelIso03_noCorr(idx);
-  lepton.relIso03DB = eleRelIso03DB(idx);
-  lepton.relIso03EA = eleRelIso03EA(idx, /*eaversion=*/1);
-  lepton.relIso03EAv2 = eleRelIso03EA(idx, /*eaversion=*/2);
-  lepton.relIso04DB = elRelIsoCustomCone(idx, 0.4, false, 0.0, /*useDBCorr=*/true);;
-  lepton.relIso04EA = elRelIsoCustomCone(idx, 0.4, false, 0.0, /*useDBCorr=*/false, /*useEACorr=*/true, /*mindr=*/-1, /*eaversion=*/1);
-  lepton.relIso04EAv2 = elRelIsoCustomCone(idx, 0.4, false, 0.0, /*useDBCorr=*/false, /*useEACorr=*/true, /*mindr=*/-1, /*eaversion=*/2);
-  lepton.miniRelIsoCMS3_EA = elMiniRelIsoCMS3_EA(idx, /*eaversion=*/1);
-  lepton.miniRelIsoCMS3_EAv2 = elMiniRelIsoCMS3_EA(idx, /*eaversion=*/2);
-  lepton.miniRelIsoCMS3_DB = elMiniRelIsoCMS3_DB(idx);
+
+  // Set electron properties
+  lepton.elEtaSC                 = cms3.els_etaSC()                 .at(idx);
+  lepton.elSigmaIEtaIEta_full5x5 = cms3.els_sigmaIEtaIEta_full5x5() .at(idx);
+  lepton.elHOverE                = cms3.els_hOverE()                .at(idx);
+  lepton.elDEtaIn                = cms3.els_dEtaIn()                .at(idx);
+  lepton.elDPhiIn                = cms3.els_dPhiIn()                .at(idx);
+  lepton.elNmiss                 = cms3.els_exp_innerlayers()       .at(idx);
+  lepton.elMvaRaw                = cms3.els_VIDNonTrigMvaValue()    .at(idx);
+  lepton.elConvVeto              = cms3.els_conv_vtx_flag()         .at(idx);
+  lepton.elMva                   = globalEleMVAreader->MVA(idx);
+  lepton.elEpRatio               = fabs( (1.0/cms3.els_ecalEnergy().at(idx)) - (cms3.els_eOverPIn().at(idx)/cms3.els_ecalEnergy().at(idx)) );
+  lepton.tightcharge             = tightChargeEle(idx);
+
+  // Set Lepton properties
+  lepton.dxy    = cms3.els_dxyPV() .at(idx);
+  lepton.dz     = cms3.els_dzPV()  .at(idx);
+  lepton.ip3d   = cms3.els_ip3d()  .at(idx);
   lepton.charge = cms3.els_charge().at(idx);
-  lepton.pdgId = (-11)*lepton.charge;
+  lepton.sip3d  = fabs(cms3.els_ip3d().at(idx))/cms3.els_ip3derr().at(idx);
+  lepton.pdgId  = (-11)*lepton.charge;
   lepton.id = 0;
   lepton.isFromX = 0;
   if (isFromW        (11, idx)) lepton.isFromX |= (1<<0);
@@ -59,6 +50,23 @@ ObjUtil::Lepton getElectron(int idx)
   if (isFromC        (11, idx)) lepton.isFromX |= (1<<3);
   if (isFromLight    (11, idx)) lepton.isFromX |= (1<<4);
   if (isFromLightFake(11, idx)) lepton.isFromX |= (1<<5);
+
+  // needed for isolation calculation
+  const LorentzVector& lep_p4 = cms3.els_p4().at(idx);
+  const LorentzVector& jet_p4 = closestJet(lep_p4, 0.4, 3.0, /*whichCorr = */2);
+  float closeJetPt            = jet_p4.pt();
+  lepton.ptRatio             = (closeJetPt>0. ? lep_p4.pt()/closeJetPt : 1.);
+  lepton.ptRel               = ptRel(lep_p4, jet_p4, true);
+  lepton.relIso03            = eleRelIso03_noCorr(idx);
+  lepton.relIso03DB          = eleRelIso03DB(idx);
+  lepton.relIso03EA          = eleRelIso03EA(idx, /*eaversion=*/1);
+  lepton.relIso03EAv2        = eleRelIso03EA(idx, /*eaversion=*/2);
+  lepton.relIso04DB          = elRelIsoCustomCone(idx, 0.4, false, 0.0, /*useDBCorr=*/true);;
+  lepton.relIso04EA          = elRelIsoCustomCone(idx, 0.4, false, 0.0, /*useDBCorr=*/false, /*useEACorr=*/true, /*mindr=*/-1, /*eaversion=*/1);
+  lepton.relIso04EAv2        = elRelIsoCustomCone(idx, 0.4, false, 0.0, /*useDBCorr=*/false, /*useEACorr=*/true, /*mindr=*/-1, /*eaversion=*/2);
+  lepton.miniRelIsoCMS3_EA   = elMiniRelIsoCMS3_EA(idx, /*eaversion=*/1);
+  lepton.miniRelIsoCMS3_EAv2 = elMiniRelIsoCMS3_EA(idx, /*eaversion=*/2);
+  lepton.miniRelIsoCMS3_DB   = elMiniRelIsoCMS3_DB(idx);
   return lepton;
 }
 
@@ -75,47 +83,39 @@ ObjUtil::Leptons getElectrons()
 
 ObjUtil::Lepton getMuon(int idx)
 {
+  // Create new object
   ObjUtil::Lepton lepton;
-  float pt = cms3.mus_p4().at(idx).pt();
-  float eta = cms3.mus_p4().at(idx).eta();
-  float phi = cms3.mus_p4().at(idx).phi();
+
+  // Set basic kinematics
+  float pt   = cms3.mus_p4()  .at(idx).pt();
+  float eta  = cms3.mus_p4()  .at(idx).eta();
+  float phi  = cms3.mus_p4()  .at(idx).phi();
   float mass = cms3.mus_mass().at(idx);
   lepton.p4.SetPtEtaPhiM(pt, eta, phi, mass);
-  lepton.dxy = cms3.mus_dxyPV().at(idx);
-  lepton.dz = cms3.mus_dzPV().at(idx);
-  lepton.tightcharge = tightChargeMuon(idx);
-  lepton.ip3d = cms3.mus_ip3d().at(idx);
-  lepton.sip3d = fabs(cms3.mus_ip3d().at(idx))/cms3.mus_ip3derr().at(idx);
-  // needed for isolation calculation
-  const LorentzVector& lep_p4 = cms3.mus_p4().at(idx);
-  const LorentzVector& jet_p4 = closestJet(lep_p4, 0.4, 3.0, /*whichCorr=*/2);
-  float closeJetPt = jet_p4.pt();
-  lepton.ptRatio = ( closeJetPt>0. ? lep_p4.pt()/closeJetPt : 1.);
-  lepton.ptRel = ptRel(lep_p4, jet_p4, true);
-  lepton.relIso03 = muRelIso03_noCorr(idx);
-  lepton.relIso03DB = muRelIso03DB(idx);
-  lepton.relIso03EA = muRelIso03EA(idx,/*eaversion=*/1);
-  lepton.relIso03EAv2 = muRelIso03EA(idx,/*eaversion=*/2);
-  lepton.relIso04DB = muRelIso04DB(idx);
-  lepton.relIso04EA = muRelIsoCustomCone(idx, 0.4, /*useVetoCones=*/false, 0.5, false, true, -1, 1);
-  lepton.relIso04EAv2 = muRelIsoCustomCone(idx, 0.4, /*useVetoCones=*/false, 0.5, false, true, -1, 2);
-  lepton.miniRelIsoCMS3_EA = muMiniRelIsoCMS3_EA(idx, /*eaversion=*/1);
-  lepton.miniRelIsoCMS3_EAv2 = muMiniRelIsoCMS3_EA(idx, /*eaversion=*/2);
-  lepton.miniRelIsoCMS3_DB = muMiniRelIsoCMS3_DB(idx);
-  lepton.charge = cms3.mus_charge().at(idx); lepton.pdgId = (-13)*lepton.charge;
-  lepton.id = 0;
-  lepton.muPOverP = cms3.mus_ptErr().at(idx) / cms3.mus_trk_p4().at(idx).pt();
-  lepton.muPidPFMuon = cms3.mus_pid_PFMuon().at(idx);
-  lepton.muType = cms3.mus_type().at(idx);
-  lepton.muChi2OverNDof = cms3.mus_gfit_chi2().at(idx) / cms3.mus_gfit_ndof().at(idx);
+
+  // Set muon properties
+  lepton.muPOverP            = cms3.mus_ptErr().at(idx) / cms3.mus_trk_p4().at(idx).pt();
+  lepton.muPidPFMuon         = cms3.mus_pid_PFMuon().at(idx);
+  lepton.muType              = cms3.mus_type().at(idx);
+  lepton.muChi2OverNDof      = cms3.mus_gfit_chi2().at(idx) / cms3.mus_gfit_ndof().at(idx);
   lepton.muChi2LocalPosition = cms3.mus_chi2LocalPosition().at(idx);
-  lepton.muTrkKink = cms3.mus_trkKink().at(idx);
-  lepton.muValidHitFraction = cms3.mus_validHits().at(idx)/(double)(cms3.mus_validHits().at(idx)+cms3.mus_lostHits().at(idx)+cms3.mus_exp_innerlayers().at(idx)+cms3.mus_exp_outerlayers().at(idx));
+  lepton.muTrkKink           = cms3.mus_trkKink().at(idx);
+  lepton.muValidHitFraction  = cms3.mus_validHits().at(idx)/(double)(cms3.mus_validHits().at(idx)+cms3.mus_lostHits().at(idx)+cms3.mus_exp_innerlayers().at(idx)+cms3.mus_exp_outerlayers().at(idx));
   lepton.muSegmCompatibility = cms3.mus_segmCompatibility().at(idx);
-  lepton.muGFitValidSTAHits = cms3.mus_gfit_validSTAHits().at(idx);
-  lepton.muNMatchedStations = cms3.mus_numberOfMatchedStations().at(idx);
-  lepton.muValidPixelHits = cms3.mus_validPixelHits().at(idx);
-  lepton.muNLayers = cms3.mus_nlayers().at(idx);
+  lepton.muGFitValidSTAHits  = cms3.mus_gfit_validSTAHits().at(idx);
+  lepton.muNMatchedStations  = cms3.mus_numberOfMatchedStations().at(idx);
+  lepton.muValidPixelHits    = cms3.mus_validPixelHits().at(idx);
+  lepton.muNLayers           = cms3.mus_nlayers().at(idx);
+  lepton.tightcharge         = tightChargeMuon(idx);
+
+  // Set Lepton properties
+  lepton.dxy    = cms3.mus_dxyPV().at(idx);
+  lepton.dz     = cms3.mus_dzPV().at(idx);
+  lepton.ip3d   = cms3.mus_ip3d().at(idx);
+  lepton.charge = cms3.mus_charge().at(idx);
+  lepton.sip3d  = fabs(cms3.mus_ip3d().at(idx))/cms3.mus_ip3derr().at(idx);
+  lepton.pdgId  = (-13)*lepton.charge;
+  lepton.id = 0;
   lepton.isFromX = 0;
   if (isFromW        (13, idx)) lepton.isFromX |= (1<<0);
   if (isFromZ        (13, idx)) lepton.isFromX |= (1<<1);
@@ -123,6 +123,23 @@ ObjUtil::Lepton getMuon(int idx)
   if (isFromC        (13, idx)) lepton.isFromX |= (1<<3);
   if (isFromLight    (13, idx)) lepton.isFromX |= (1<<4);
   if (isFromLightFake(13, idx)) lepton.isFromX |= (1<<5);
+
+  // needed for isolation calculation
+  const LorentzVector& lep_p4 = cms3.mus_p4().at(idx);
+  const LorentzVector& jet_p4 = closestJet(lep_p4, 0.4, 3.0, /*whichCorr = */2);
+  float closeJetPt            = jet_p4.pt();
+  lepton.ptRatio             = (closeJetPt>0. ? lep_p4.pt()/closeJetPt : 1.);
+  lepton.ptRel               = ptRel(lep_p4, jet_p4, true);
+  lepton.relIso03            = muRelIso03_noCorr(idx);
+  lepton.relIso03DB          = muRelIso03DB(idx);
+  lepton.relIso03EA          = muRelIso03EA(idx,/*eaversion=*/1);
+  lepton.relIso03EAv2        = muRelIso03EA(idx,/*eaversion=*/2);
+  lepton.relIso04DB          = muRelIso04DB(idx);
+  lepton.relIso04EA          = muRelIsoCustomCone(idx, 0.4, /*useVetoCones=*/false, 0.5, false, true, -1, 1);
+  lepton.relIso04EAv2        = muRelIsoCustomCone(idx, 0.4, /*useVetoCones=*/false, 0.5, false, true, -1, 2);
+  lepton.miniRelIsoCMS3_EA   = muMiniRelIsoCMS3_EA(idx, /*eaversion=*/1);
+  lepton.miniRelIsoCMS3_EAv2 = muMiniRelIsoCMS3_EA(idx, /*eaversion=*/2);
+  lepton.miniRelIsoCMS3_DB   = muMiniRelIsoCMS3_DB(idx);
   return lepton;
 }
 
@@ -344,8 +361,9 @@ ObjUtil::Truths getTruths()
 
     bool is_good_status = (status == 21 || status == 22 || status == 23 || status == 1 || status == 2);
     bool is_hardscatter_related = (iGen >= 4 && iGen <= 7) || (abs(motherId) > 1000000) || (abs(motherId) == 23) || (abs(motherId) == 24);
+    bool is_mother_wz = (abs(motherId) == 24 || abs(motherId) == 23);
 
-    if ( !(is_good_status && is_hardscatter_related) )
+    if (!is_mother_wz)
       continue;
 
     truth.p4.SetPtEtaPhiM(pt, eta, phi, mass);
