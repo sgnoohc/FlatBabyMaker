@@ -46,6 +46,8 @@ void beforeLoop(TChain* chain, TString output_name_, int nevents)
   TreeUtil::createLeptonBranch(baby_output_tree, "lep");
   TreeUtil::createJetBranch(baby_output_tree, "jet");
   TreeUtil::createMETBranch(baby_output_tree, "met");
+  TreeUtil::createEventInfoBranch(baby_output_tree, "evt");
+  TreeUtil::createFloatBranch(baby_output_tree, "gen_ht");
 
 }
 
@@ -61,6 +63,7 @@ void loop()
 
     initCMS3();
     initJetCorrection();
+    initElectronMVA();
 
     // Loop over the TTree
     while (LoopUtil::nextEvent())
@@ -112,6 +115,8 @@ void processCMS3Event()
   TreeUtil::setLeptons(ana_data, "lep");
   TreeUtil::setJets(ana_data, "jet");
   TreeUtil::setMET(ana_data, "met");
+  TreeUtil::setEventInfo(ana_data, "evt");
+  TreeUtil::setFloatBranch("gen_ht", gen_ht());
 
   baby_output_tree->Fill();
 }
@@ -120,10 +125,11 @@ void processCMS3Event()
 void getObjects()
 {
   /// Get objects
-  ana_data.leptons = getLeptons();
-  ana_data.jets    = getJets();
-  ana_data.met     = getMETs().at(0);
-  //ana_data.wgt     = cms3.evt_scale1fb();
+  ana_data.leptons   = getLeptons();
+  ana_data.jets      = getJets();
+  ana_data.met       = getMETs().at(0);
+  ana_data.eventinfo = getEventInfo();
+  ana_data.wgt       = cms3.evt_scale1fb();
   ana_data.truths    = getTruths();
 }
 

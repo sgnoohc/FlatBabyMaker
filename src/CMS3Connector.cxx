@@ -4,6 +4,7 @@
 // ..: P. Chang, philip@physics.ucsd.edu
 
 #include "CMS3Connector.h"
+#include "ElectronSelections.cc" // to get globalEleMVAreader
 
 // global variables
 FactorizedJetCorrector* jet_corrector = 0;
@@ -30,7 +31,8 @@ ObjUtil::Lepton getElectron(int idx)
   lepton.elConvVeto = cms3.els_conv_vtx_flag().at(idx);
   lepton.ip3d = cms3.els_ip3d().at(idx);
   lepton.sip3d = fabs(cms3.els_ip3d().at(idx))/cms3.els_ip3derr().at(idx);
-  lepton.elMva = cms3.els_VIDNonTrigMvaValue().at(idx) ;
+  //lepton.elMva = cms3.els_VIDNonTrigMvaValue().at(idx) ;
+  lepton.elMva = globalEleMVAreader->MVA(idx);
   // needed for isolation calculation
   const LorentzVector& lep_p4 = cms3.els_p4().at(idx);
   const LorentzVector& jet_p4 = closestJet(lep_p4, 0.4, 3.0, /*whichCorr=*/2);
@@ -39,12 +41,24 @@ ObjUtil::Lepton getElectron(int idx)
   lepton.ptRel = ptRel(lep_p4, jet_p4, true);
   lepton.relIso03 = eleRelIso03_noCorr(idx);
   lepton.relIso03DB = eleRelIso03DB(idx);
-  lepton.relIso03EA = eleRelIso03EA(idx);
+  lepton.relIso03EA = eleRelIso03EA(idx, /*eaversion=*/1);
+  lepton.relIso03EAv2 = eleRelIso03EA(idx, /*eaversion=*/2);
+  lepton.relIso04DB = elRelIsoCustomCone(idx, 0.4, false, 0.0, /*useDBCorr=*/true);;
+  lepton.relIso04EA = elRelIsoCustomCone(idx, 0.4, false, 0.0, /*useDBCorr=*/false, /*useEACorr=*/true, /*mindr=*/-1, /*eaversion=*/1);
+  lepton.relIso04EAv2 = elRelIsoCustomCone(idx, 0.4, false, 0.0, /*useDBCorr=*/false, /*useEACorr=*/true, /*mindr=*/-1, /*eaversion=*/2);
   lepton.miniRelIsoCMS3_EA = elMiniRelIsoCMS3_EA(idx, /*eaversion=*/1);
+  lepton.miniRelIsoCMS3_EAv2 = elMiniRelIsoCMS3_EA(idx, /*eaversion=*/2);
   lepton.miniRelIsoCMS3_DB = elMiniRelIsoCMS3_DB(idx);
   lepton.charge = cms3.els_charge().at(idx);
   lepton.pdgId = (-11)*lepton.charge;
   lepton.id = 0;
+  lepton.isFromX = 0;
+  if (isFromW        (11, idx)) lepton.isFromX |= (1<<0);
+  if (isFromZ        (11, idx)) lepton.isFromX |= (1<<1);
+  if (isFromB        (11, idx)) lepton.isFromX |= (1<<2);
+  if (isFromC        (11, idx)) lepton.isFromX |= (1<<3);
+  if (isFromLight    (11, idx)) lepton.isFromX |= (1<<4);
+  if (isFromLightFake(11, idx)) lepton.isFromX |= (1<<5);
   return lepton;
 }
 
@@ -80,8 +94,13 @@ ObjUtil::Lepton getMuon(int idx)
   lepton.ptRel = ptRel(lep_p4, jet_p4, true);
   lepton.relIso03 = muRelIso03_noCorr(idx);
   lepton.relIso03DB = muRelIso03DB(idx);
-  lepton.relIso03EA = muRelIso03EA(idx);
+  lepton.relIso03EA = muRelIso03EA(idx,/*eaversion=*/1);
+  lepton.relIso03EAv2 = muRelIso03EA(idx,/*eaversion=*/2);
+  lepton.relIso04DB = muRelIso04DB(idx);
+  lepton.relIso04EA = muRelIsoCustomCone(idx, 0.4, /*useVetoCones=*/false, 0.5, false, true, -1, 1);
+  lepton.relIso04EAv2 = muRelIsoCustomCone(idx, 0.4, /*useVetoCones=*/false, 0.5, false, true, -1, 2);
   lepton.miniRelIsoCMS3_EA = muMiniRelIsoCMS3_EA(idx, /*eaversion=*/1);
+  lepton.miniRelIsoCMS3_EAv2 = muMiniRelIsoCMS3_EA(idx, /*eaversion=*/2);
   lepton.miniRelIsoCMS3_DB = muMiniRelIsoCMS3_DB(idx);
   lepton.charge = cms3.mus_charge().at(idx); lepton.pdgId = (-13)*lepton.charge;
   lepton.id = 0;
@@ -97,6 +116,13 @@ ObjUtil::Lepton getMuon(int idx)
   lepton.muNMatchedStations = cms3.mus_numberOfMatchedStations().at(idx);
   lepton.muValidPixelHits = cms3.mus_validPixelHits().at(idx);
   lepton.muNLayers = cms3.mus_nlayers().at(idx);
+  lepton.isFromX = 0;
+  if (isFromW        (13, idx)) lepton.isFromX |= (1<<0);
+  if (isFromZ        (13, idx)) lepton.isFromX |= (1<<1);
+  if (isFromB        (13, idx)) lepton.isFromX |= (1<<2);
+  if (isFromC        (13, idx)) lepton.isFromX |= (1<<3);
+  if (isFromLight    (13, idx)) lepton.isFromX |= (1<<4);
+  if (isFromLightFake(13, idx)) lepton.isFromX |= (1<<5);
   return lepton;
 }
 
@@ -163,6 +189,18 @@ ObjUtil::Jets getJets()
 
     // Charge hadron fraction
     jet.chf = cms3.pfjets_chargedHadronE().at(iJet) / (cms3.pfjets_undoJEC().at(iJet)*cms3.pfjets_p4().at(iJet).energy());
+    jet.nhf = cms3.pfjets_neutralHadronE().at(iJet) / (cms3.pfjets_undoJEC().at(iJet)*cms3.pfjets_p4().at(iJet).energy());
+    jet.cef = cms3.pfjets_chargedEmE().at(iJet) / (cms3.pfjets_undoJEC().at(iJet)*cms3.pfjets_p4().at(iJet).energy());
+    jet.nef = cms3.pfjets_neutralEmE().at(iJet) / (cms3.pfjets_undoJEC().at(iJet)*cms3.pfjets_p4().at(iJet).energy());
+    jet.muf = cms3.pfjets_muonE().at(iJet) / (cms3.pfjets_undoJEC().at(iJet)*cms3.pfjets_p4().at(iJet).energy());
+    jet.cm = cms3.pfjets_chargedMultiplicity().at(iJet);
+    jet.nm = cms3.pfjets_neutralMultiplicity().at(iJet);
+    jet.puValue = cms3.pfjets_pileupJetId().at(iJet);
+    jet.npfcand = cms3.pfjets_pfcandIndicies().at(iJet).size();
+    if (LoopUtil::isfastsim)
+      jet.mcdr = cms3.pfjets_mcdr().at(iJet);
+    else
+      jet.mcdr = -999;
 
     // btag CSV
     jet.btagCSV = cms3.pfjets_pfCombinedInclusiveSecondaryVertexV2BJetTag().at(iJet);
@@ -324,6 +362,30 @@ ObjUtil::Truths getTruths()
 
 }
 
+ObjUtil::EventInfo getEventInfo()
+{
+  ObjUtil::EventInfo eventinfo;
+  eventinfo.run = cms3.evt_run();
+  eventinfo.lumi = cms3.evt_lumiBlock();
+  eventinfo.event = cms3.evt_event();
+  eventinfo.nEvts = cms3.evt_nEvts();
+  eventinfo.scale1fb = cms3.evt_scale1fb();
+  return eventinfo;
+}
+
+float gen_ht()
+{
+  float gen_ht = 0;
+  for(unsigned int iGen = 0; iGen < cms3.genps_p4().size(); iGen++)
+  {
+    if (    (abs(cms3.genps_id().at(iGen)) <  6 || abs(cms3.genps_id().at(iGen)) == 21)
+         && (cms3.genps_status().at(iGen) == 22 || cms3.genps_status().at(iGen) == 23)
+       )
+      gen_ht += cms3.genps_p4().at(iGen).pt();
+  }
+  return gen_ht;
+}
+
 void initJetCorrection()
 {
 
@@ -450,6 +512,11 @@ void initJetCorrection()
     jetcorr_uncertainty = new JetCorrectionUncertainty(jetcorr_uncertainty_filename);
   }
 
+}
+
+void initElectronMVA()
+{
+  createAndInitMVA("MVAinput", true, false, 80);
 }
 
 //eof

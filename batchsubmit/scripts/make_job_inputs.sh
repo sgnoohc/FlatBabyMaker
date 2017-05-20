@@ -8,12 +8,14 @@ mkdir -p $DIR/../__package
 cd $DIR/../__package
 rm -f *
 cp $COREPATH/libCMS3_CORE.so .
-cp $DITTOPATH/bin/ditto_ana_mybaby .
+cp $DITTOPATH/bin/ditto_ana_${PACKAGENAME} .
 cp $DIR/../scripts/run_baby_run.sh .
 ln -s $COREPATH CORE
-tar -czf package.tar.gz CORE/Tools/jetcorr/data/run2_25ns/ libCMS3_CORE.so ditto_ana_mybaby run_baby_run.sh
+ln -s $COREPATH MVAinput
+tar -czf package.tar.gz CORE/Tools/jetcorr/data/run2_25ns/ libCMS3_CORE.so ditto_ana_${PACKAGENAME} run_baby_run.sh MVAinput/data
 rm CORE
-rm libCMS3_CORE.so ditto_ana_mybaby
+rm MVAinput
+rm libCMS3_CORE.so ditto_ana_${PACKAGENAME}
 cp $DIR/../scripts/sweeproot.sh $DIR/../scripts/sweeproot_macro.C $DIR/../scripts/merge_script.sh $DIR/../scripts/merge_macro.C .
 
 echo "Creatied $DIR/../__package"
