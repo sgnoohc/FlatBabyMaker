@@ -6,7 +6,7 @@
 #include "CMS3Looper.h"
 
 //CMS3 mytree;
-Analyses::AnalysisData ana_data;
+ObjUtil::AnalysisData ana_data;
 TString output_name;
 TFile* baby_output_file;
 TTree* baby_output_tree;

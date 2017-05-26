@@ -25,7 +25,7 @@
 using namespace Ditto;
 
 //extern CMS3 mytree;
-extern Analyses::AnalysisData ana_data;
+extern ObjUtil::AnalysisData ana_data;
 extern TString output_name;
 extern TFile* baby_output_file;
 extern TTree* baby_output_tree;
