@@ -107,7 +107,8 @@ ObjUtil::Lepton getMuon(int idx)
   lepton.muPOverP            = cms3.mus_ptErr().at(idx) / cms3.mus_trk_p4().at(idx).pt();
   lepton.muPidPFMuon         = cms3.mus_pid_PFMuon().at(idx);
   lepton.muType              = cms3.mus_type().at(idx);
-  lepton.muChi2OverNDof      = cms3.mus_gfit_chi2().at(idx) / cms3.mus_gfit_ndof().at(idx);
+//	  lepton.muChi2OverNDof      = cms3.mus_gfit_chi2().at(idx) / cms3.mus_gfit_ndof().at(idx);
+  lepton.muChi2OverNDof      = cms3.mus_gfit_chi2().at(idx) / cms3.mus_gfit_ndof_float().at(idx);
   lepton.muChi2LocalPosition = cms3.mus_chi2LocalPosition().at(idx);
   lepton.muTrkKink           = cms3.mus_trkKink().at(idx);
   lepton.muValidHitFraction  = cms3.mus_validHits().at(idx)/(double)(cms3.mus_validHits().at(idx)+cms3.mus_lostHits().at(idx)+cms3.mus_exp_innerlayers().at(idx)+cms3.mus_exp_outerlayers().at(idx));
