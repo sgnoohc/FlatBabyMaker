@@ -407,7 +407,7 @@ ObjUtil::EventInfo getEventInfo()
   eventinfo.run = cms3.evt_run();
   eventinfo.lumi = cms3.evt_lumiBlock();
   eventinfo.event = cms3.evt_event();
-  eventinfo.nEvts = cms3.evt_nEvts();
+//	  eventinfo.nEvts = cms3.evt_nEvts();
   eventinfo.scale1fb = cms3.evt_scale1fb();
   return eventinfo;
 }
