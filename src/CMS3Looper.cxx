@@ -50,7 +50,7 @@ void beforeLoop(TChain* chain, TString output_name_, int nevents)
   TreeUtil::createFloatBranch(baby_output_tree, "gen_ht");
 
   // Print progress bar
-  LoopUtil::doprintprogressbar = true;
+//	  LoopUtil::doprintprogressbar = true;
 
 }
 
