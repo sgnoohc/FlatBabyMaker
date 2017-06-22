@@ -1,6 +1,7 @@
 # Flat Baby Maker
 
-![Tummy time image](img/tummy_time_for_flat_head.jpg)
+![Tummy time image](img/tummy_time_for_flat_head_resized.jpg)
+image taken from http://www.plagiocephalyflathead.com/
 
 This loops over CMS3 (or CMS4) and create a truly flat baby.
 
