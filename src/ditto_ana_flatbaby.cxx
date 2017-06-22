@@ -1,4 +1,4 @@
-#include "ditto_ana_mybaby.h"
+#include "ditto_ana_flatbaby.h"
 
 int main(int argc, char* argv[])
 {
@@ -6,7 +6,7 @@ int main(int argc, char* argv[])
   {
     PrintUtil::print("Usage:");
     PrintUtil::print("");
-    PrintUtil::print("        ./ditto_ana_mybaby INPUT_FILE_PATH OUTPUT.root [MAXEVENTS]  # the last three argument must be provided at the same time");
+    PrintUtil::print("        ./ditto_ana_flatbaby INPUT_FILE_PATH OUTPUT.root [MAXEVENTS]  # the last three argument must be provided at the same time");
     PrintUtil::print("");
     PrintUtil::error("Please check your arguement!");
   }

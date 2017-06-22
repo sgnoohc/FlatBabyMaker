@@ -1,5 +1,5 @@
-#ifndef ditto_ana_mybaby_h
-#define ditto_ana_mybaby_h
+#ifndef ditto_ana_flatbaby_h
+#define ditto_ana_flatbaby_h
 
 #include "CMS3.h"
 #include "CMS3Looper.h"
