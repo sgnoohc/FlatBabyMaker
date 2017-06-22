@@ -1,8 +1,7 @@
-# ![Tummy time image](img/tummy_time_for_flat_head_resized.jpg)[1] Flat Baby Maker
+# ![Tummy time image](img/tummy_time_for_flat_head_resized.jpg) Flat Baby Maker
 
 
 This loops over CMS3 (or CMS4) and create a truly flat baby.
-
 
 CMS3 looper template.
 It uses Ditto.
@@ -23,4 +22,4 @@ It uses Ditto.
     ditto_ana_mybaby /path/to/your/cms3 1000    # the 1000 is there to run over 1000 events only. Remove to run over all events.
     ditto_edit  # opens up relevant files in vim. (of course)
 
-[1] (image taken from http://www.plagiocephalyflathead.com/)
+[*] (image taken from http://www.plagiocephalyflathead.com/)
