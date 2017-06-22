@@ -1,4 +1,9 @@
-# mybaby
+# Flat Baby Maker
+
+![Tummy time image](img/tummy_time_for_flat_head.jpg)
+
+This loops over CMS3 (or CMS4) and create a truly flat baby.
+
 
 CMS3 looper template.
 It uses Ditto.
