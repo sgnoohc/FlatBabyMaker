@@ -1,4 +1,4 @@
-// vim: tabstop=2:softtabstop=2:shiftwidth=2:expandtab
+// vim: tabstop=4:softtabstop=4:shiftwidth=4:expandtab
 
 //  .
 // ..: P. Chang, philip@physics.ucsd.edu
