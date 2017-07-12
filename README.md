@@ -2,7 +2,7 @@
   <img src="http://www.plagiocephalyflathead.com/i/tummy_time_for_flat_head.jpg" width="350"/>
 </p>
 
-# ![Tummy time image]() Flat Baby Maker
+# <img src="http://www.plagiocephalyflathead.com/i/tummy_time_for_flat_head.jpg" width="350"/> Flat Baby Maker
 
 
 This loops over CMS3 (or CMS4) and create a truly flat baby.
